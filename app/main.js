@@ -8,6 +8,8 @@ const stringifyHeaders = (headers) => {
 };
 
 const server = net.createServer((socket) => {
+  socket.setEncoding("utf-8");
+  
   socket.on("data", (data) => {
     const lines = data.toString().split(eol.matcher);
 
@@ -41,7 +43,7 @@ const server = net.createServer((socket) => {
       const statusLine = `HTTP/1.1 200 OK`;
       const resHeaders = {
         "Content-Type": "text/plain",
-        "Content-Length": Buffer.byteLength(uaStr),
+        "Content-Length": Buffer.byteLength(uaStr, "utf-8"),
       };
 
       socket.write(`${statusLine}${eol.val}${stringifyHeaders(resHeaders)}${del}${uaStr}`);
@@ -53,7 +55,6 @@ const server = net.createServer((socket) => {
 
   socket.on("close", () => {
     socket.end();
-    server.close();
   });
 });
 
