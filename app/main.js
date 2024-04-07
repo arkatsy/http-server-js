@@ -19,7 +19,7 @@ const stringifyHeaders = (headers) => {
 
 function createResponse(statusLine = null, headers = {}, body = null) {
   if (!statusLine) {
-    throw new Error(`Cannot construct response without status line`);
+    throw new TypeError(`Cannot construct response without status line`);
   }
   let response = `${statusLine}`;
 
