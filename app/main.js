@@ -1,6 +1,11 @@
 const net = require("node:net");
 
 const eol = { matcher: /\r?\n|\r|\n/g, val: "\r\n" };
+const del = `${eol.val}${eol.val}`;
+
+const stringifyHeaders = (headers) => {
+  return Object.entries(headers).map(([key, value]) => `${key}: ${value}`).join(eol.val);
+};
 
 const server = net.createServer((socket) => {
   socket.on("data", (data) => {
@@ -11,7 +16,7 @@ const server = net.createServer((socket) => {
 
     const segs = path.split("/").slice(1);
 
-    if (!segs[1]) {
+    if (segs[0].length === 0) {
       socket.write(`HTTP/1.1 200 OK${eol.val}${eol.val}`);
       return;
     }
@@ -20,22 +25,30 @@ const server = net.createServer((socket) => {
       const randomStr = segs.slice(1).join("/");
 
       const statusLine = `HTTP/1.1 200 OK`;
-      const headersObj = {
+      const resHeaders = {
         "Content-Type": "text/plain",
         "Content-Length": Buffer.byteLength(randomStr),
       };
 
-      const headers = Object.entries(headersObj)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join(eol.val);
-
-      const del = `${eol.val}${eol.val}`;
-
-      socket.write(`${statusLine}${eol.val}${headers}${del}${randomStr}`);
+      socket.write(`${statusLine}${eol.val}${stringifyHeaders(resHeaders)}${del}${randomStr}`);
       return;
     }
 
-    socket.write(`HTTP/1.1 404 Not Found${eol.val}${eol.val}`);
+    if (segs[0] === "user-agent") {
+      const ua = headers.find((header) => header.startsWith("User-Agent: "));
+      const uaStr = ua.split(": ")[1];
+
+      const statusLine = `HTTP/1.1 200 OK`;
+      const resHeaders = {
+        "Content-Type": "text/plain",
+        "Content-Length": Buffer.byteLength(uaStr),
+      };
+
+      socket.write(`${statusLine}${eol.val}${stringifyHeaders(resHeaders)}${del}${uaStr}`);
+      return;
+    }
+
+    socket.write(`HTTP/1.1 404 Not Found${del}`);
   });
 
   socket.on("close", () => {
