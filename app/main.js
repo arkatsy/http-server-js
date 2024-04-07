@@ -10,6 +10,12 @@ const server = net.createServer((socket) => {
     const headers = lines.slice(1);
 
     const segs = path.split("/").slice(1);
+
+    if (!segs[1]) {
+      socket.write(`HTTP/1.1 200 OK${eol.val}${eol.val}`);
+      return;
+    }
+
     if (segs[0] === "echo" && segs[1].length !== 0) {
       const randomStr = segs[1];
 
