@@ -17,7 +17,7 @@ const server = net.createServer((socket) => {
     }
 
     if (segs[0] === "echo" && segs[1].length !== 0) {
-      const randomStr = segs.slice(1).join(" ");
+      const randomStr = segs.slice(1).join("/");
 
       const statusLine = `HTTP/1.1 200 OK`;
       const headersObj = {
