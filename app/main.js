@@ -1,24 +1,35 @@
 const net = require("node:net");
 
-const eol = /\r?\n|\r|\n/g;
+const eol = { matcher: /\r?\n|\r|\n/g, val: "\r\n" };
 
 const server = net.createServer((socket) => {
   socket.on("data", (data) => {
-    // socket.write('HTTP/1.1 200 OK\r\n\r\n')
-    // =======================================
-    // GET /index.html HTTP/1.1
-    // Host: localhost:4221
-    // User-Agent: curl/7.64.1
-    const lines = data.toString().split(eol);
+    const lines = data.toString().split(eol.matcher);
 
     const [method, path, version] = lines[0].split(" ");
     const headers = lines.slice(1);
 
-    if (path.split("/")[1].length === 0) {
-      socket.write("HTTP/1.1 200 OK\r\n\r\n");
+    const segs = path.split("/").slice(1);
+    if (segs[0] === "echo" && segs[1].length !== 0) {
+      const randomStr = segs[1];
+
+      const statusLine = `HTTP/1.1 200 OK`;
+      const headersObj = {
+        "Content-Type": "text/plain",
+        "Content-Length": Buffer.byteLength(randomStr),
+      };
+
+      const headers = Object.entries(headersObj)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(eol.val);
+
+      const del = `${eol.val}${eol.val}`;
+
+      socket.write(`${statusLine}${eol.val}${headers}${del}${randomStr}`);
       return;
     }
-    socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+
+    socket.write(`HTTP/1.1 404 Not Found${eol.val}${eol.val}`);
   });
 
   socket.on("close", () => {
